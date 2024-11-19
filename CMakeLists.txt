@@ -132,7 +132,7 @@ endif()
 # Find Clang resource directory with Clang executable.
 
 if(NOT CLANG_RESOURCE_DIR)
-  find_program(CLANG_EXECUTABLE clang)
+  find_program(CLANG_EXECUTABLE clang-${Clang_VERSION_MAJOR})
   if(NOT CLANG_EXECUTABLE)
     message(FATAL_ERROR "clang executable not found.")
   endif()
