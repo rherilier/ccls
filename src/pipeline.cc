@@ -204,7 +204,7 @@ bool indexer_Parse(SemaManager *completion, WorkingFiles *wfiles,
   auto &request = *opt_request;
   bool loud = request.mode != IndexMode::OnChange;
 
-  // Dummy one to trigger refresh semantic highlight.
+  // Dummy one to trigger refresh semantic highlight and diagnostic.
   if (request.path.empty()) {
     IndexUpdate dummy;
     dummy.refresh = true;
@@ -505,10 +505,10 @@ void indexerSort(const std::unordered_map<std::string, int> &dir2prio) {
   });
 }
 
-void main_OnIndexed(DB *db, WorkingFiles *wfiles, IndexUpdate *update) {
+void main_OnIndexed(SemaManager *manager, DB *db, WorkingFiles *wfiles, IndexUpdate *update) {
   if (update->refresh) {
     LOG_S(INFO)
-        << "loaded project. Refresh semantic highlight for all working file.";
+        << "loaded project. Refresh semantic highlight and diagnostic for all working file.";
     std::lock_guard lock(wfiles->mutex);
     for (auto &[f, wf] : wfiles->files) {
       std::string path = lowerPathIfInsensitive(f);
@@ -516,6 +516,7 @@ void main_OnIndexed(DB *db, WorkingFiles *wfiles, IndexUpdate *update) {
         continue;
       QueryFile &file = db->files[db->name2file_id[path]];
       emitSemanticHighlight(db, wf.get(), file);
+      manager->scheduleDiag(f, 0);
     }
     if (g_config->client.semanticTokensRefresh) {
       std::optional<bool> param;
@@ -715,7 +716,7 @@ void mainLoop() {
         break;
       did_work = true;
       indexed = true;
-      main_OnIndexed(&db, &wfiles, &*update);
+      main_OnIndexed(&manager, &db, &wfiles, &*update);
       if (update->files_def_update) {
         auto it = path2backlog.find(update->files_def_update->first.path);
         if (it != path2backlog.end()) {

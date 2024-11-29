@@ -545,7 +545,7 @@ void Project::index(WorkingFiles *wfiles, const RequestId &id) {
 
   pipeline::loaded_ts = pipeline::tick;
   // Dummy request to indicate that project is loaded and
-  // trigger refreshing semantic highlight for all working files.
+  // trigger refreshing semantic highlight and diagnostic for all working files.
   pipeline::index("", {}, IndexMode::Background, false);
 }
 
